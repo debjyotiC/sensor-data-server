@@ -2,7 +2,7 @@ from flask import Flask, request, render_template, jsonify
 from datetime import datetime
 from pymongo import MongoClient
 
-client = MongoClient("mongodb://localhost:27017")
+client = MongoClient("mongodb://mongodb:27017")
 app = Flask(__name__)
 
 database = client['data-server']
@@ -33,7 +33,28 @@ def update():
     data_packet = {
         "data": sensor_data,
         "key": sensor_key,
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "type": "JSON"
+    }
+
+    collection.insert_one(data_packet)
+
+    return jsonify({"Response": "Data saved"}), 200
+
+
+@app.route("/legacy", methods=['GET'])
+def legacy():
+    sensor_data = request.args.get("data")
+    sensor_key = request.args.get("key")
+
+    if sensor_data is None or sensor_key is None:
+        return jsonify({"Response": "Invalid sensor data or key"}), 400
+
+    data_packet = {
+        "data": sensor_data,
+        "key": sensor_key,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "type": "legacy"
     }
 
     collection.insert_one(data_packet)
